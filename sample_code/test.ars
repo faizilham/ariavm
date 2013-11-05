@@ -1,0 +1,25 @@
+# sample aria assembly code
+# calculate factorial(10)
+push 10
+store 0
+push 1
+store 1
+
+.L1
+load 0
+load 1
+mul
+store 1
+
+load 0
+push 1
+sub
+store 0
+
+load 0
+jnz .L1
+
+load 1
+print
+
+halt
