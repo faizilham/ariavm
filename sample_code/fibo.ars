@@ -1,0 +1,45 @@
+# test recursive function
+
+input
+call .func.fibonacci
+print
+halt
+
+# function section
+
+.func.fibonacci
+	store 0
+	load 0
+	jz .fib1
+	load 0
+	push 1
+	eq
+	jnz .fib2
+
+	load 0
+	push 1
+	sub
+	call .func.fibonacci
+	store 1
+
+	load 0
+	push 2
+	sub
+	call .func.fibonacci
+	store 2
+
+	load 1
+	load 2
+	add
+	jmp .fib3
+
+	.fib1
+	push 0
+	jmp .fib3
+
+	.fib2
+	push 1
+
+	.fib3
+	return
+

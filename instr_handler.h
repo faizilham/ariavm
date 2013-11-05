@@ -2,12 +2,13 @@
 #define INSTR_HANDLER_H
 
 #include "instr_aria.h"
+#include <string.h>
 
 void h_push(){ push(load_int()); }
 void h_pop(){ pop(); }
 
-void h_load(){ push(memory[load_int()]);}
-void h_store(){	memory[load_int()] = pop();}
+void h_load(){ push(reg[load_int()]);}
+void h_store(){	reg[load_int()] = pop();}
 
 void h_jmp(){ ip = load_int();}
 void h_jz(){ int target = load_int(); if (!pop()) ip = target;}
@@ -35,6 +36,22 @@ void h_print(){printf("%d", pop());}
 void h_printc(){printf("%c", pop());}
 void h_halt(){running = 0;}
 void h_nop(){}
+
+void h_call(){
+	int tmp = load_int();
+	fstack[++fsp].old_ip = ip;
+	memcpy(fstack[fsp].old_reg, reg, sizeof(int) * 8);
+	ip = tmp;
+}
+
+void h_return(){
+	ip = fstack[fsp].old_ip;
+	memcpy(reg, fstack[fsp--].old_reg, sizeof(int) * 8);
+}
+
+void h_input(){
+	scanf("%d", &stack[++sp]);
+}
 
 void (*commands[25])();
 
@@ -70,6 +87,9 @@ void init_commands(){
 		commands[PRINT]=h_print;
 		commands[HALT]=h_halt;
 		commands[PRINTC]=h_printc;
+		commands[CALL]=h_call;
+		commands[RETURN]=h_return;
+		commands[INPUT]=h_input;
 }
 
 #endif

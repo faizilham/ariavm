@@ -35,4 +35,7 @@ instruction_map["LTE"] = 0x16
 instruction_map["PRINT"] = 0x17
 instruction_map["HALT"] = 0x18
 instruction_map["PRINTC"] = 0x19
+instruction_map["CALL"] = 0x1A
+instruction_map["RETURN"] = 0x1B
+instruction_map["INPUT"] = 0x1C
 

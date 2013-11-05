@@ -1,16 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_STACK 4096
+#define MAX_FUNCSTACK 256
+#define INSTR_LEN 65536
+
 typedef unsigned char byte;
 typedef unsigned int ptr_t;
 
-int stack[1024]; 	// stack
+typedef struct{
+	ptr_t old_ip;
+	int old_reg[8]; // hanya 8 register pertama yg dijamin aman
+} func_t;
+
+int stack[MAX_STACK]; 	// stack
 ptr_t sp = -1;  	// stack pointer
 
-byte instr[65536]; 	// instruction
+func_t fstack[MAX_FUNCSTACK];
+ptr_t fsp = -1;
+
+byte instr[INSTR_LEN]; 	// instruction
 ptr_t ip = 0;		// instruction pointer
 
-int memory[256];	// virtual memory
+int reg[1024];	// virtual register / memori
 int running = 1;	// running flag
 
 void push(int value){
@@ -28,12 +40,12 @@ int load_int(){
 	return sum;
 }
 
-#include "instr_handler.h"
-
 void die(char* info){
 	printf("%s\n", info);
 	exit(1);
 }
+
+#include "instr_handler.h"
 
 void load_program(char* filename){	
 	FILE* file = fopen(filename, "rb");
@@ -60,7 +72,7 @@ int main(int argc, char** argv){
 	init_commands();
 	
 	while(running){
-		commands[instr[ip++]](); //execute		
+		commands[instr[ip++]](); //execute
 	}
 	
 	return 0;

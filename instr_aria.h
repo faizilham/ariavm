@@ -28,6 +28,9 @@
 		PRINT	: pop 1 elemen, print ke layar (integer)
 		HALT	: hentikan program
 		PRINTC	: pop 1 elemen, print ke layar (karakter)
+		CALL x	: simpan ip & 8 register awal, jalankan fungsi dengan label x
+		RETURN	: kembalikan ip & 8 register awal seperti sebelum fungsi dipanggil
+		INPUT	: baca nilai integer dari layar, push ke stack
 */
 
 // memory access
@@ -67,5 +70,8 @@
 #define PRINT 0x17
 #define HALT 0x18
 #define PRINTC 0x19
+#define CALL 0x1A
+#define RETURN 0x1B
+#define INPUT 0x1C
 
 #endif
