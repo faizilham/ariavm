@@ -27,10 +27,10 @@ void h_xor(){push(pop() ^ pop());}
 
 void h_eq(){push(pop() == pop());}
 void h_neq(){push(pop() != pop());}
-void h_gt(){push(pop() > pop());}
-void h_lt(){push(pop() < pop());}
-void h_gte(){push(pop() >= pop());}
-void h_lte(){push(pop() <= pop());}
+void h_gt(){int val1 = pop(); push(pop() > val1);}
+void h_lt(){int val1 = pop(); push(pop() < val1);}
+void h_gte(){int val1 = pop(); push(pop() >= val1);}
+void h_lte(){int val1 = pop(); push(pop() <= val1);}
 
 void h_print(){printf("%d", pop());}
 void h_printc(){printf("%c", pop());}
@@ -40,20 +40,20 @@ void h_nop(){}
 void h_call(){
 	int tmp = load_int();
 	fstack[++fsp].old_ip = ip;
-	memcpy(fstack[fsp].old_reg, reg, sizeof(int) * 8);
+	memcpy(fstack[fsp].old_reg, reg, sizeof(int) * LOCAL_VAR);
 	ip = tmp;
 }
 
 void h_return(){
 	ip = fstack[fsp].old_ip;
-	memcpy(reg, fstack[fsp--].old_reg, sizeof(int) * 8);
+	memcpy(reg, fstack[fsp--].old_reg, sizeof(int) * LOCAL_VAR);
 }
 
 void h_input(){
 	scanf("%d", &stack[++sp]);
 }
 
-void (*commands[25])();
+void (*commands[29])();
 
 void init_commands(){
 		commands[NOP]=h_nop;

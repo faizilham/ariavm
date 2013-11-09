@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-	a sample aria "assembly" code (*.ars) converter to aria executable code (*.arx)
+	a sample aria vm code (*.avc) converter to aria executable code (*.arx)
 """
 
 import sys, struct
@@ -13,7 +13,7 @@ if (len(sys.argv) != 2):
 fname = sys.argv[1]
 
 try:
-	fname = fname[:fname.index(".ars")]
+	fname = fname[:fname.index(".avc")]
 except:
 	sys.exit(1)
 	
@@ -39,6 +39,7 @@ with open(sys.argv[1], 'r') as input:
 				else:
 					for char in struct.pack("<i", int(token[1])):
 						code.append(char)
+						
 
 with open("{0}.arx".format(fname), 'wb') as output:
 	n = 0
