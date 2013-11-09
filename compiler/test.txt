@@ -1,0 +1,9 @@
+a=10
+sum=1
+while a > 0
+	sum = sum * a
+	a--
+end
+print sum
+print 10 + 2 * 3
+print 10 * 2 + 3

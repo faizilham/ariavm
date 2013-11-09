@@ -22,6 +22,14 @@ int Tokenizer::getline() const{
 	return line;
 }
 
+int Tokenizer::size() const{
+	return tokens.size();
+}
+
+Token& Tokenizer::at(int n){
+	return tokens[n];
+}
+
 void Tokenizer::tokenize(){
 	init();
 	while(input.good()){
@@ -123,7 +131,7 @@ void Tokenizer::recognize(string value){
 void Tokenizer::print(){
 	int n = tokens.size();
 	for (int i = 0; i < n; i++)
-		cout<<":"<<tokens[i].value<<endl;
+		cout<<tokens[i].value<<" "<<tokens[i].type<<endl;
 	
 }
 

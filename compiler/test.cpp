@@ -1,17 +1,20 @@
 #include <fstream>
 #include <stdexcept>
-#include "tokenizer.hpp"
+#include "parser.hpp"
 
 int main(){
-	fstream in("test.txt");
-	Tokenizer tok(in);
+	fstream in("test.txt");	
+	Parser parser(in);
+	
 	try{
-		tok.tokenize();
+		parser.parse();
+		parser.printCode();
 	}catch(runtime_error& e){
-		cout<<"Error on line "<<tok.getline()<<": "<<e.what()<<endl;
-		return 1;
+		cout<<e.what()<<endl;
+		Token& tok = parser.getLastProcessed();
+		cout<<tok.value<<" "<<tok.line<<endl;
 	}
-	tok.print();
+	
 	in.close();
 	
 	return 0;

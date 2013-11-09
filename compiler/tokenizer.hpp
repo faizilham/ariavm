@@ -44,10 +44,10 @@ static const string logic_op[] = {"!", "&", "|"}; static const int logic_op_size
 static const string test_op[] = {"==", "!=", "<", ">", "<=", ">=", "=>", "=<"}; static const int test_op_size = 8;
 
 static const string assign_op[] = {"="}; static const int assign_op_size = 1;
-static const string incdec_op[] = {"++", "--"}; static const int incdec_op_size = 1;
+static const string incdec_op[] = {"++", "--"}; static const int incdec_op_size = 2;
 
-static const string reserved_words[] = {"if", "elseif", "else", "while", "repeat", "until", "define", "return", "end"};
-static const int reserved_words_size = 9;
+static const string reserved_words[] = {"if", "elseif", "else", "while", "repeat", "until", "define", "return", "end", "print", "read"};
+static const int reserved_words_size = 11;
 
 static bool exist(string value, const string array[], int size){
 	for (int i = 0; i < size; i++)
@@ -75,6 +75,8 @@ class Tokenizer{
 		void print();
 		static int getType(char);
 		int getline() const;
+		int size() const;
+		Token& at(int);
 		
 };
 
