@@ -1,0 +1,24 @@
+input
+store 16
+push 1
+store 17
+.L0
+load 16
+push 0
+gt
+jz .L1
+load 17
+load 16
+mul
+store 17
+load 16
+push 1
+sub
+store 16
+jmp .L0
+.L1
+load 17
+print
+push 10
+printc
+halt
