@@ -3,8 +3,9 @@
 
 Parser::Parser(istream& input) : tokens(input){
 	next = 0;
-	label = 0; vars = 0;
+	label = 0; globalvars = 0;
 	infunc = false;
+	settarget(main);
 	try{
 		tokens.tokenize();
 	}catch(runtime_error& e){
@@ -25,18 +26,15 @@ bool Parser::lookAhead(int type){
 }
 Token& Parser::match(string value){
 	if (!eof() && lookAhead(value)) return consume();
-	else throw runtime_error("no match " + value);
+	else throw runtime_error("Expected " + value);
 }
 Token& Parser::match(int type){
 	if(!eof() && lookAhead(type)) return consume();
-	else throw runtime_error("no match type " + to_str(type));
+	else throw runtime_error("Expected type " + to_str(type));
 }
 
 void Parser::add_code(string code){
-	if(infunc)
-		funcs.push_back(code);
-	else
-		main.push_back(code);
+	target_code->push_back(code);
 }
 
 void Parser::add_code(int code){
@@ -45,6 +43,14 @@ void Parser::add_code(int code){
 
 void Parser::add_line(){
 	add_code("\n");
+}
+
+void Parser::settarget(vector<string>& target){
+	target_code = &target;
+}
+
+string Parser::newlabel(){
+	return ".L" + to_str(label++);
 }
 
 bool Parser::eof(){
@@ -76,6 +82,8 @@ void Parser::opexpr(){
 	}else if((val == "<=") || (val == "=<")){
 		add_code("lte"); add_line();
 	}
+	
+	// logic operator, % not yet
 }
 
 void Parser::expression(){
@@ -89,10 +97,10 @@ void Parser::expression(){
 
 	}else if (lookAhead(T_IDENTIFIER)){
 		string ident = match(T_IDENTIFIER).value;
-		if (identifiers.find(ident) == identifiers.end())
+		if (globals.find(ident) == globals.end())
 			throw runtime_error("Identifier " + ident + " is undeclared / unassigned");
 		
-		ident_t idt = identifiers[ident];
+		ident_t idt = globals[ident];
 		
 		if(idt.variable){
 			add_code("load"); add_code(idt.memory); add_line();
@@ -135,6 +143,23 @@ void Parser::incrstat(ident_t idt){
 	}
 }
 
+ident_t Parser::getIdent(Token& ident){
+	ident_t idt;
+	if(globals.find(ident.value) == globals.end()){
+		idt.line = ident.line;
+		idt.declared = true;
+		idt.variable = true;
+		idt.memory = 16 + (globalvars++); // asumsi global var dulu
+		
+		globals.insert(make_pair(ident.value, idt));
+	}else{
+		idt = globals[ident.value];
+		if (!idt.variable) throw ("Cannot do assignment to function " + ident.value);
+	}
+	
+	return idt;
+}
+
 void Parser::idenstat(){
 	// var incr '\n'
 	// ident  expression '\n'
@@ -142,18 +167,7 @@ void Parser::idenstat(){
 	Token& ident = match(T_IDENTIFIER);
 	
 	if (lookAhead(T_ASSIGNMENT) || lookAhead(T_INCDEC)){
-		ident_t idt;
-		if(identifiers.find(ident.value) == identifiers.end()){
-			idt.line = ident.line;
-			idt.declared = true;
-			idt.variable = true;
-			idt.memory = 16 + (vars++); // asumsi global var dulu
-			
-			identifiers.insert(make_pair(ident.value, idt));
-		}else{
-			idt = identifiers[ident.value];
-			if (!idt.variable) throw ("Cannot do assignment to function " + ident.value);
-		}
+		ident_t idt = getIdent(ident);
 		
 		if(lookAhead(T_INCDEC)){
 			incrstat(idt);
@@ -171,8 +185,8 @@ void Parser::idenstat(){
 
 void Parser::whilestat(){
 	match("while");
-	string start = ".L" + to_str(label++);
-	string end = ".L" + to_str(label++);
+	string start = newlabel();
+	string end = newlabel();
 	add_code(start); add_line();
 	expression();
 	add_code("jz"); add_code(end); add_line();
@@ -203,6 +217,91 @@ void Parser::printstat(){
 	add_code("printc"); add_line();	
 }
 
+void Parser::readstat(){
+	match("read");
+	
+	Token& ident = match(T_IDENTIFIER);
+	ident_t idt = getIdent(ident);
+	
+	match(T_NEWLINE);
+	
+	add_code("input"); add_line();
+	add_code("store"); add_code(idt.memory); add_line();
+}
+
+
+void Parser::__readcond(string __match, string actlabel, vector<string>& jumptable){
+	settarget(jumptable);
+	match(__match); expression(); match(T_NEWLINE);
+	add_code("jnz"); add_code(actlabel); add_line();
+}
+
+void Parser::__readact(string actlabel, string endlabel, vector<string>& st_part){
+	settarget(st_part); 
+	add_code(actlabel); add_line();
+	statements();
+	add_code("jmp"); add_code(endlabel); add_line();
+}
+
+void Parser::ifstat(){
+	vector<string> jumptable, st_part, *actual;
+	actual = target_code;
+	string actlabel, endlabel = newlabel();
+	
+	/* read if */
+	actlabel = newlabel();
+	__readcond("if", actlabel, jumptable);
+	__readact(actlabel, endlabel, st_part);
+	
+	
+	while(lookAhead("elseif")){
+		/* read elseif */
+		actlabel = newlabel();
+		__readcond("elseif", actlabel, jumptable);
+		__readact(actlabel, endlabel, st_part);
+	}
+	
+	if (lookAhead("else")){
+		/* read condition */
+		actlabel = newlabel();
+		match("else"); match(T_NEWLINE);
+		settarget(jumptable);
+		add_code("jmp"); add_code(actlabel); add_line();
+		
+		__readact(actlabel, endlabel, st_part);
+	}else{
+		settarget(jumptable);
+		add_code("jmp"); add_code(endlabel); add_line();
+	}
+	
+	match("end"); match(T_NEWLINE);
+
+	/* add jumptable, statement part and endlabel*/
+	target_code = actual;
+	
+	for(int i = 0; i < jumptable.size(); i++)
+		add_code(jumptable[i]);
+		
+	for(int i = 0; i < st_part.size(); i++)
+		add_code(st_part[i]);
+	
+	add_code(endlabel); add_line();
+	
+}
+
+void Parser::repeatstat(){
+	match("repeat"); match(T_NEWLINE);
+	string rep = newlabel();
+	add_code(rep); add_line();
+	
+	statements();
+	
+	match("until");
+	expression();
+	match(T_NEWLINE);
+	add_code("jz"); add_code(rep); add_line();
+}
+
 void Parser::statements(){
 	if (eof()) return;
 
@@ -212,16 +311,29 @@ void Parser::statements(){
 		break;
 		case T_RESERVED:
 		{
-			if (lookAhead("end")){
+			if (lookAhead("end") || lookAhead("else") || lookAhead("elseif") || lookAhead("until")){
 				return;
 			}else if(lookAhead("while")){
 				whilestat();
 			}else if(lookAhead("print")){
 				printstat();
+			}else if(lookAhead("read")){
+				readstat();
+			}else if(lookAhead("if")){
+				ifstat();
+			}else if(lookAhead("repeat")){
+				repeatstat();
+			}else if(lookAhead("define")){
+				// define
+			}else if(lookAhead("return")){
+				// return
 			}else{
 				return;
 			}
 		}
+		break;
+		case T_NEWLINE:
+			match(T_NEWLINE);
 		break;
 		default:
 			throw runtime_error("Invalid token " + tokens.at(next).value);
@@ -236,17 +348,21 @@ void Parser::parse(){
 	add_code("halt"); add_line();
 }
 
-void Parser::printCode(){
+vector<string>& Parser::getCode(){
+	return main;
+}
+
+void Parser::printCode(ostream& out){
 	int i = 0;
 	
 	while (i < main.size()){
 		if(main[i]!="\n"){
-			cout<<main[i++];
+			out<<main[i++];
 		
 			if((i == main.size()) || (main[i]=="\n")){
-				cout<<endl;
+				out<<endl;
 			}else{
-				cout<<" ";
+				out<<" ";
 			}
 		}else{
 			i++;

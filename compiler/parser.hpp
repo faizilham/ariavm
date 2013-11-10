@@ -21,14 +21,16 @@ static string to_str(int n){
 class Parser{
 	private:
 		Tokenizer tokens;
-		vector<string> main, funcs;
-		map<string, ident_t> identifiers;
+		vector<string> main, funcs, *target_code;
+		map<string, ident_t> globals;
 		int next; int label; bool infunc;
-		int vars;
+		int globalvars;
 		
 		void add_code(string);
 		void add_code(int);
 		void add_line();
+		void settarget(vector<string>&);
+		string newlabel();
 		
 		Token& match(string);
 		Token& match(int);
@@ -36,14 +38,23 @@ class Parser{
 		void assignstat();
 		void incrstat(ident_t);
 		
+		
 		// void funcexpr();
 		void opexpr();
 		void expression();
+		
+		ident_t getIdent(Token&);
 		
 		void idenstat();
 		void whilestat();
 		void statements();
 		void printstat();
+		void readstat();
+		void ifstat();
+		void __readcond(string, string, vector<string>&);
+		void __readact(string, string, vector<string>&);
+		
+		void repeatstat();
 		
 		bool eof();
 		
@@ -57,8 +68,9 @@ class Parser{
 		~Parser();
 		
 		Token& getLastProcessed();
+		vector<string>& getCode();
 		void parse();
-		void printCode();
+		void printCode(ostream&);
 };
 
 #endif
