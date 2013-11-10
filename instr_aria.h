@@ -11,26 +11,27 @@
 		JZ x	: jump ke instruksi ke-x jika top == 0
 		JNZ x	: jump ke instruksi ke-x jika top != 0
 		ADD		: pop 2 elemen, tambahkan, lalu push hasilnya
-		SUB		: pop 2 elemen, kurangkan: *(top-1) - *top, lalu push hasilnya
+		SUB		: pop 2 elemen, kurangkan: pop2 - pop1, lalu push hasilnya
 		MUL		: pop 2 elemen, kalikan, lalu push hasilnya
-		DIV		: pop 2 elemen, bagi integer: *(top-1) div *top, lalu push hasilnya
-		NEG		: pop 1 elemen, negasikan, lalu push hasilnya
+		DIV		: pop 2 elemen, bagi: pop2 div pop1, lalu push hasilnya
+		MOD		: pop 2 elemen, mod: pop2 mod pop1, lalu push hasilnya
 		AND		: pop 2 elemen, operasi &, lalu push hasilnya
 		OR		: pop 2 elemen, operasi |, lalu push hasilnya
 		XOR		: pop 2 elemen, operasi ^, lalu push hasilnya
 		NOT		: pop 1 elemen, operasi !, lalu push hasilnya
 		EQ		: pop 2 elemen, operasi ==, lalu push hasilnya
 		NEQ		: pop 2 elemen, operasi !=, lalu push hasilnya
-		GT		: pop 2 elemen, operasi >, lalu push hasilnya
-		LT		: pop 2 elemen, operasi <, lalu push hasilnya
-		GTE		: pop 2 elemen, operasi >=, lalu push hasilnya
-		LTE		: pop 2 elemen, operasi <=, lalu push hasilnya
+		GT		: pop 2 elemen, operasi pop2 > pop1, lalu push hasilnya
+		LT		: pop 2 elemen, operasi pop2 < pop1, lalu push hasilnya
+		GTE		: pop 2 elemen, operasi pop2 >= pop1, lalu push hasilnya
+		LTE		: pop 2 elemen, operasi pop2 <= pop1, lalu push hasilnya
 		PRINT	: pop 1 elemen, print ke layar (integer)
 		HALT	: hentikan program
 		PRINTC	: pop 1 elemen, print ke layar (karakter)
 		CALL x	: simpan ip & 8 register awal, jalankan fungsi dengan label x
 		RETURN	: kembalikan ip & 8 register awal seperti sebelum fungsi dipanggil
 		INPUT	: baca nilai integer dari layar, push ke stack
+		INPUTC	: baca nilai char dari layar, push ke stack
 */
 
 // memory access
@@ -50,7 +51,7 @@
 #define SUB 0x09
 #define MUL 0x0A
 #define DIV 0x0B
-#define NEG 0x0C
+#define MOD 0x0C
 
 // logic
 #define AND 0x0D
@@ -73,5 +74,6 @@
 #define CALL 0x1A
 #define RETURN 0x1B
 #define INPUT 0x1C
+#define INPUTC 0x1D
 
 #endif

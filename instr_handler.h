@@ -18,7 +18,7 @@ void h_add(){ push(pop() + pop());}
 void h_sub(){ int val1 = pop(); push(pop() - val1);}
 void h_mul(){ push(pop() * pop());}
 void h_div(){ int val1 = pop(); push(pop() / val1);}
-void h_neg(){ push(-pop());}
+void h_mod(){ int val1 = pop(); push(pop() % val1);}
 
 void h_and(){ push(pop() & pop());}
 void h_or(){ push(pop() | pop());}
@@ -53,7 +53,11 @@ void h_input(){
 	scanf("%d", &stack[++sp]);
 }
 
-void (*commands[29])();
+void h_inputc(){
+	scanf("%c", &stack[++sp]);
+}
+
+void (*commands[30])();
 
 void init_commands(){
 		commands[NOP]=h_nop;
@@ -70,7 +74,7 @@ void init_commands(){
 		commands[SUB]=h_sub;
 		commands[MUL]=h_mul;
 		commands[DIV]=h_div;
-		commands[NEG]=h_neg;
+		commands[MOD]=h_mod;
 		
 		commands[AND]=h_and;
 		commands[OR]=h_or;
@@ -90,6 +94,7 @@ void init_commands(){
 		commands[CALL]=h_call;
 		commands[RETURN]=h_return;
 		commands[INPUT]=h_input;
+		commands[INPUTC]=h_inputc;
 }
 
 #endif

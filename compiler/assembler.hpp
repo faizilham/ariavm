@@ -25,7 +25,7 @@ static void initmap(){
 		instruction_map["SUB"] = 0x09;
 		instruction_map["MUL"] = 0x0A;
 		instruction_map["DIV"] = 0x0B;
-		instruction_map["NEG"] = 0x0C;
+		instruction_map["MOD"] = 0x0C;
 		instruction_map["AND"] = 0x0D;
 		instruction_map["OR"] = 0x0E;
 		instruction_map["NOT"] = 0x0F;
@@ -42,6 +42,7 @@ static void initmap(){
 		instruction_map["CALL"] = 0x1A;
 		instruction_map["RETURN"] = 0x1B;
 		instruction_map["INPUT"] = 0x1C;
+		instruction_map["INPUTC"] = 0x1D;
 		initialized = true;
 	}
 }
