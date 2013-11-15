@@ -151,6 +151,9 @@ int Tokenizer::getType(char c){
 		case '/':
 		case '<':
 		case '>':
+		case '!':
+		case '|':
+		case '&':
 			return OPERATOR;
 		break;
 		case '#':

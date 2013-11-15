@@ -1,9 +1,10 @@
-define add(x, y)
-	print x + y
+define fibo(x)
+	if x < 2
+		return x
+	else
+		return fibo(x-1) + fibo(x-2)
+	end
 end
 
-a = 10
-while a > 0
-	add(10 - a, 11 - a) 
-	a--
-end
+read input
+print fibo(input)

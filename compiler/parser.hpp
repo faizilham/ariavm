@@ -18,6 +18,18 @@ static string to_str(int n){
 	return ss.str();
 }
 
+static const string R_IF = "if";
+static const string R_ELSEIF = "elseif";
+static const string R_ELSE = "else";
+static const string R_WHILE = "while";
+static const string R_REPEAT = "repeat";
+static const string R_UNTIL = "until";
+static const string R_DEFINE = "define";
+static const string R_RETURN = "return";
+static const string R_END = "end";
+static const string R_PRINT = "print";
+static const string R_READ = "read";
+
 class Parser{
 	private:
 		Tokenizer tokens;
@@ -41,7 +53,7 @@ class Parser{
 		void incrstat(ident_t);
 		
 		
-		// void funcexpr();
+		void funcexpr(ident_t);
 		void opexpr();
 		void expression();
 		
@@ -58,6 +70,7 @@ class Parser{
 		void ifstat();
 		void definestat();
 		void returnstat();
+		void endstat();
 		void __readcond(string, string, vector<string>&);
 		void __readact(string, string, vector<string>&);
 		

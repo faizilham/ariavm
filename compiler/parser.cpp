@@ -75,6 +75,8 @@ void Parser::opexpr(){
 		add_code("mul"); add_line();
 	}else if (val == "/"){
 		add_code("div"); add_line();
+	}else if(val == "%"){
+		add_code("mod"); add_line();
 	}else if (val == "<"){
 		add_code("lt"); add_line();
 	}else if (val == ">"){
@@ -87,9 +89,33 @@ void Parser::opexpr(){
 		add_code("gte"); add_line();
 	}else if((val == "<=") || (val == "=<")){
 		add_code("lte"); add_line();
+	}else if(val == "&&"){
+		add_code("and"); add_line();
+	}else if(val == "||"){
+		add_code("or"); add_line();
+	}else{
+		throw runtime_error("Invalid expression");
 	}
 	
 	// logic operator, % not yet
+}
+
+
+void Parser::funcexpr(ident_t idt){
+	int n = 0;
+	match(T_PAR_OPEN);
+	
+	while (!lookAhead(T_PAR_CLOSE)){
+		n++;
+		expression();
+		if (!lookAhead(T_PAR_CLOSE))
+			match(T_COMMA);
+	}
+	
+	if (n != idt.memory) throw runtime_error("Wrong number of parameter");
+	
+	match(T_PAR_CLOSE);
+	add_code("call"); add_code(idt.label); add_line();
 }
 
 void Parser::expression(){
@@ -99,17 +125,24 @@ void Parser::expression(){
 		Token& ident = match(T_IDENTIFIER);
 		if (!identExist(ident))
 			throw runtime_error("Identifier " + ident.value + " is undeclared / unassigned");
-		
-		ident_t idt = getVar(ident);
-		
-		if(idt.variable){
-			add_code("load"); add_code(idt.memory); add_line();
-		}else{
-			// funcexpr();
+				
+		if (lookAhead(T_PAR_OPEN)){ // function
+			funcexpr(getFunc(ident));
+		}else{ // variable
+			add_code("load"); add_code(getVar(ident).memory); add_line();
 		}
 		
 	}else if(lookAhead(T_PAR_OPEN)){
 		match(T_PAR_OPEN); expression(); match(T_PAR_CLOSE);
+	}else if (lookAhead("!")){
+		match("!"); expression();
+		add_code("not"); add_line();
+	}else if (lookAhead("-")){
+		match("-"); expression();
+		add_code("push"); add_code("-1"); add_line();
+		add_code("mul"); add_line();
+	}else{
+		throw runtime_error("Invalid expression");
 	}
 	
 	if (lookAhead(T_OPERATOR)){
@@ -226,7 +259,7 @@ void Parser::idenstat(){
 }
 
 void Parser::whilestat(){
-	match("while");
+	match(R_WHILE);
 	string start = newlabel();
 	string end = newlabel();
 	add_code(start); add_line();
@@ -237,7 +270,7 @@ void Parser::whilestat(){
 	
 	statements();
 	
-	match("end"); match(T_NEWLINE);
+	endstat();
 	add_code("jmp"); add_code(start); add_line();
 	add_code(end); add_line();
 }
@@ -246,7 +279,7 @@ void Parser::printstat(){
 	// 'print' '\n'
 	// 'print' expression '\n'
 
-	match("print");
+	match(R_PRINT);
 	
 	if (!lookAhead(T_NEWLINE)){
 		expression();
@@ -260,7 +293,7 @@ void Parser::printstat(){
 }
 
 void Parser::readstat(){
-	match("read");
+	match(R_READ);
 	
 	Token& ident = match(T_IDENTIFIER);
 	ident_t idt = getVar(ident);
@@ -292,21 +325,21 @@ void Parser::ifstat(){
 	
 	/* read if */
 	actlabel = newlabel();
-	__readcond("if", actlabel, jumptable);
+	__readcond(R_IF, actlabel, jumptable);
 	__readact(actlabel, endlabel, st_part);
 	
 	
-	while(lookAhead("elseif")){
+	while(lookAhead(R_ELSEIF)){
 		/* read elseif */
 		actlabel = newlabel();
-		__readcond("elseif", actlabel, jumptable);
+		__readcond(R_ELSEIF, actlabel, jumptable);
 		__readact(actlabel, endlabel, st_part);
 	}
 	
-	if (lookAhead("else")){
+	if (lookAhead(R_ELSE)){
 		/* read condition */
 		actlabel = newlabel();
-		match("else"); match(T_NEWLINE);
+		match(R_ELSE); match(T_NEWLINE);
 		settarget(jumptable);
 		add_code("jmp"); add_code(actlabel); add_line();
 		
@@ -316,7 +349,7 @@ void Parser::ifstat(){
 		add_code("jmp"); add_code(endlabel); add_line();
 	}
 	
-	match("end"); match(T_NEWLINE);
+	endstat();
 
 	/* add jumptable, statement part and endlabel*/
 	target_code = actual;
@@ -332,13 +365,13 @@ void Parser::ifstat(){
 }
 
 void Parser::repeatstat(){
-	match("repeat"); match(T_NEWLINE);
+	match(R_REPEAT); match(T_NEWLINE);
 	string rep = newlabel();
 	add_code(rep); add_line();
 	
 	statements();
 	
-	match("until");
+	match(R_UNTIL);
 	expression();
 	match(T_NEWLINE);
 	add_code("jz"); add_code(rep); add_line();
@@ -347,7 +380,7 @@ void Parser::repeatstat(){
 void Parser::definestat(){
 	//read define
 
-	match("define");
+	match(R_DEFINE);
 	if (infunc) throw runtime_error("Cannot define function inside function");
 	
 	infunc = true;
@@ -403,7 +436,7 @@ void Parser::definestat(){
 	
 	statements();
 	
-	match("end"); match(T_NEWLINE);
+	endstat();
 	
 	if (funcs[funcs.size() - 2] != "return"){
 		add_code("push"); add_code(0); add_line();
@@ -419,16 +452,22 @@ void Parser::definestat(){
 }
 
 void Parser::returnstat(){
-	match("return");
+	match(R_RETURN);
 	
 	if(!infunc) throw runtime_error("Return statement outside of function definition");
 	
 	if (!lookAhead(T_NEWLINE)){
 		expression();
+	}else{
+		add_code("push"); add_code(0);
 	}
 	
 	match(T_NEWLINE);
 	add_code("return"); add_line();
+}
+
+void Parser::endstat(){
+	match(R_END); match(T_NEWLINE);
 }
 
 void Parser::statements(){
@@ -440,21 +479,21 @@ void Parser::statements(){
 		break;
 		case T_RESERVED:
 		{
-			if (lookAhead("end") || lookAhead("else") || lookAhead("elseif") || lookAhead("until")){
+			if (lookAhead(R_END) || lookAhead(R_ELSE) || lookAhead(R_ELSEIF) || lookAhead(R_UNTIL)){
 				return;
-			}else if(lookAhead("while")){
+			}else if(lookAhead(R_WHILE)){
 				whilestat();
-			}else if(lookAhead("print")){
+			}else if(lookAhead(R_PRINT)){
 				printstat();
-			}else if(lookAhead("read")){
+			}else if(lookAhead(R_READ)){
 				readstat();
-			}else if(lookAhead("if")){
+			}else if(lookAhead(R_IF)){
 				ifstat();
-			}else if(lookAhead("repeat")){
+			}else if(lookAhead(R_REPEAT)){
 				repeatstat();
-			}else if(lookAhead("define")){
+			}else if(lookAhead(R_DEFINE)){
 				definestat();
-			}else if(lookAhead("return")){
+			}else if(lookAhead(R_RETURN)){
 				returnstat();
 			}else{
 				return;

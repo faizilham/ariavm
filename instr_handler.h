@@ -20,8 +20,8 @@ void h_mul(){ push(pop() * pop());}
 void h_div(){ int val1 = pop(); push(pop() / val1);}
 void h_mod(){ int val1 = pop(); push(pop() % val1);}
 
-void h_and(){ push(pop() & pop());}
-void h_or(){ push(pop() | pop());}
+void h_and(){ push(pop() && pop());}
+void h_or(){ push(pop() || pop());}
 void h_not(){ push(!pop());}
 void h_xor(){push(pop() ^ pop());}
 

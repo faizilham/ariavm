@@ -39,7 +39,7 @@ static const int T_NEWLINE = 10;
 
 static const string math_op[] = {"+", "-", "*", "/", "%"}; static const int math_op_size = 5;
 
-static const string logic_op[] = {"!", "&", "|"}; static const int logic_op_size = 3;
+static const string logic_op[] = {"!", "&&", "||"}; static const int logic_op_size = 3;
 
 static const string test_op[] = {"==", "!=", "<", ">", "<=", ">=", "=>", "=<"}; static const int test_op_size = 8;
 
