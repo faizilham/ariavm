@@ -47,17 +47,17 @@ void Assembler::build_symbol(){
 	int i = 0;
 	
 	while (i < code.size()){
-		string first = uppercase(code[i++]);
+		string first = code[i++];
 		
 		if (first[0] == '.'){
 			label.insert(make_pair(first, symbol.size()));
 		}else{
-			symbol.push_back(strc(instruction_map[first]));
+			symbol.push_back(strc(instruction_map[uppercase(first)]));
 			
 		}
 		
 		if (i == code.size()) break;
-		string second = uppercase(code[i++]);
+		string second = code[i++];
 		
 		if (second[0] == '.'){
 			symbol.push_back(second);
