@@ -6,6 +6,8 @@ Parser::Parser(istream& input) : tokens(input){
 	label = 0; globalvars = 0;
 	infunc = false;
 	settarget(main);
+	settable(globals);
+	module_name = ".blah";
 	try{
 		tokens.tokenize();
 	}catch(runtime_error& e){
@@ -49,8 +51,12 @@ void Parser::settarget(vector<string>& target){
 	target_code = &target;
 }
 
+void Parser::settable(map<string, ident_t>& table){
+	symbol_table = &table;
+}
+
 string Parser::newlabel(){
-	return ".L" + to_str(label++);
+	return module_name + ".L" + to_str(label++);
 }
 
 bool Parser::eof(){
@@ -89,18 +95,12 @@ void Parser::opexpr(){
 void Parser::expression(){
 	if (lookAhead(T_INTEGER)){
 		add_code("push"); add_code(match(T_INTEGER).value); add_line();
-		
-		if (lookAhead(T_OPERATOR)){
-			opexpr(); return;
-		}
-		else if (lookAhead(T_NEWLINE) || lookAhead(T_PAR_CLOSE)) return;
-
 	}else if (lookAhead(T_IDENTIFIER)){
-		string ident = match(T_IDENTIFIER).value;
-		if (globals.find(ident) == globals.end())
-			throw runtime_error("Identifier " + ident + " is undeclared / unassigned");
+		Token& ident = match(T_IDENTIFIER);
+		if (!identExist(ident))
+			throw runtime_error("Identifier " + ident.value + " is undeclared / unassigned");
 		
-		ident_t idt = globals[ident];
+		ident_t idt = getVar(ident);
 		
 		if(idt.variable){
 			add_code("load"); add_code(idt.memory); add_line();
@@ -108,18 +108,14 @@ void Parser::expression(){
 			// funcexpr();
 		}
 		
-		if (lookAhead(T_OPERATOR)){
-			opexpr(); return;
-		}
-		else if (lookAhead(T_NEWLINE) || lookAhead(T_PAR_CLOSE)) return;
 	}else if(lookAhead(T_PAR_OPEN)){
 		match(T_PAR_OPEN); expression(); match(T_PAR_CLOSE);
-		
-		if (lookAhead(T_OPERATOR)){
-			opexpr(); return;
-		}
-		else if (lookAhead(T_NEWLINE) || lookAhead(T_PAR_CLOSE)) return;
 	}
+	
+	if (lookAhead(T_OPERATOR)){
+		opexpr(); return;
+	}
+	else if (lookAhead(T_COMMA) || lookAhead(T_NEWLINE) || lookAhead(T_PAR_CLOSE)) return;
 	
 	throw runtime_error("Invalid expression");
 }
@@ -143,31 +139,58 @@ void Parser::incrstat(ident_t idt){
 	}
 }
 
-ident_t Parser::getIdent(Token& ident){
+ident_t Parser::getVar(Token& ident){
 	ident_t idt;
-	if(globals.find(ident.value) == globals.end()){
+	
+	int v = identExist(ident);
+	
+	if(v == 0){ // blom ada
 		idt.line = ident.line;
-		idt.declared = true;
 		idt.variable = true;
-		idt.memory = 16 + (globalvars++); // asumsi global var dulu
 		
-		globals.insert(make_pair(ident.value, idt));
+		if (infunc)
+			idt.memory = locals.size();
+		else
+			idt.memory = 16 + (globalvars++);
+		
+		symbol_table->insert(make_pair(ident.value, idt));
 	}else{
-		idt = globals[ident.value];
-		if (!idt.variable) throw ("Cannot do assignment to function " + ident.value);
+		idt = v == 1 ? globals[ident.value] : locals[ident.value];
+		if (!idt.variable) throw runtime_error(ident.value + " is not a variable");
 	}
 	
 	return idt;
 }
 
+ident_t Parser::getFunc(Token& ident){
+	int v = identExist(ident);
+	if(!v) throw runtime_error("Function " + ident.value + " is undeclared");
+	
+	if (v==2) throw runtime_error("Identifier " + ident.value + " is not a function");
+	
+	ident_t idt = globals[ident.value];
+	if (idt.variable) throw runtime_error("Identifier " + ident.value + " is not a function");
+	
+	return idt;	
+}
+
+int Parser::identExist(Token& ident){
+	if(infunc && (locals.find(ident.value) != locals.end()))
+		return 2;
+	else if (globals.find(ident.value) != globals.end())
+		return 1;
+	else
+		return 0;
+}
+
 void Parser::idenstat(){
 	// var incr '\n'
-	// ident  expression '\n'
+	// ident = expression '\n'
 
 	Token& ident = match(T_IDENTIFIER);
 	
 	if (lookAhead(T_ASSIGNMENT) || lookAhead(T_INCDEC)){
-		ident_t idt = getIdent(ident);
+		ident_t idt = getVar(ident);
 		
 		if(lookAhead(T_INCDEC)){
 			incrstat(idt);
@@ -178,6 +201,25 @@ void Parser::idenstat(){
 		match(T_NEWLINE);
 		
 		add_code("store"); add_code(idt.memory); add_line();
+	}else if(lookAhead(T_PAR_OPEN)){
+		ident_t idt = getFunc(ident);
+		
+		int n = 0;
+		match(T_PAR_OPEN);
+		
+		while (!lookAhead(T_PAR_CLOSE)){
+			n++;
+			expression();
+			if (!lookAhead(T_PAR_CLOSE))
+				match(T_COMMA);
+		}
+		
+		if (n != idt.memory) throw runtime_error("Wrong number of parameter");
+		
+		match(T_PAR_CLOSE); match(T_NEWLINE);
+		add_code("call"); add_code(idt.label); add_line();
+		add_code("pop"); add_line();
+		
 	}else{
 		throw runtime_error("Expecting = or ++ or --");
 	}
@@ -221,7 +263,7 @@ void Parser::readstat(){
 	match("read");
 	
 	Token& ident = match(T_IDENTIFIER);
-	ident_t idt = getIdent(ident);
+	ident_t idt = getVar(ident);
 	
 	match(T_NEWLINE);
 	
@@ -302,6 +344,93 @@ void Parser::repeatstat(){
 	add_code("jz"); add_code(rep); add_line();
 }
 
+void Parser::definestat(){
+	//read define
+
+	match("define");
+	if (infunc) throw runtime_error("Cannot define function inside function");
+	
+	infunc = true;
+	locals.clear();
+	settable(locals);
+	settarget(funcs);
+	
+	// read function name
+	Token& ident = match(T_IDENTIFIER);
+	
+	if (identExist(ident)) throw runtime_error("Identifier " + ident.value + " already declared");
+	
+	ident_t func;
+	
+	// make function label and put to global symbol table
+	
+	func.line = ident.line;
+	func.variable = false;
+	func.label = module_name + ".func." + ident.value;
+	func.memory = 0; // serves as number of params
+	
+		
+	//read (
+	match(T_PAR_OPEN);
+	
+	// read parameters
+	while(!lookAhead(T_PAR_CLOSE)){
+		Token& param = match(T_IDENTIFIER);
+		func.memory++;
+		
+		ident_t par;	
+		par.line = param.line;
+		par.variable = true;
+		par.memory = locals.size();
+		
+		locals.insert(make_pair(param.value, par));
+		
+		if (!lookAhead(T_PAR_CLOSE)) match(T_COMMA);
+	}
+	
+	// read ) and newline
+	match(T_PAR_CLOSE); match(T_NEWLINE);
+	
+	// insert function to symbol table
+	globals.insert(make_pair(ident.value, func));
+	
+	// make initial function code
+	add_code(func.label); add_line();
+	
+	for (int i = func.memory - 1; i >= 0; i--){
+		add_code("store"); add_code(i); add_line();
+	}
+	
+	statements();
+	
+	match("end"); match(T_NEWLINE);
+	
+	if (funcs[funcs.size() - 2] != "return"){
+		add_code("push"); add_code(0); add_line();
+		add_code("return"); add_line();
+	}
+	
+	// cleanup
+	
+	infunc = false;
+	locals.clear();
+	settable(globals);
+	settarget(main);
+}
+
+void Parser::returnstat(){
+	match("return");
+	
+	if(!infunc) throw runtime_error("Return statement outside of function definition");
+	
+	if (!lookAhead(T_NEWLINE)){
+		expression();
+	}
+	
+	match(T_NEWLINE);
+	add_code("return"); add_line();
+}
+
 void Parser::statements(){
 	if (eof()) return;
 
@@ -324,9 +453,9 @@ void Parser::statements(){
 			}else if(lookAhead("repeat")){
 				repeatstat();
 			}else if(lookAhead("define")){
-				// define
+				definestat();
 			}else if(lookAhead("return")){
-				// return
+				returnstat();
 			}else{
 				return;
 			}
@@ -346,6 +475,10 @@ void Parser::statements(){
 void Parser::parse(){
 	statements();
 	add_code("halt"); add_line();
+	
+	for (int i = 0; i < funcs.size(); i++){
+		main.push_back(funcs[i]);
+	}
 }
 
 vector<string>& Parser::getCode(){

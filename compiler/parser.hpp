@@ -7,7 +7,7 @@
 
 typedef struct {
 	int line;
-	bool declared;
+	string label;
 	bool variable;
 	int memory;
 } ident_t;
@@ -21,8 +21,9 @@ static string to_str(int n){
 class Parser{
 	private:
 		Tokenizer tokens;
+		string module_name;
 		vector<string> main, funcs, *target_code;
-		map<string, ident_t> globals;
+		map<string, ident_t> globals, locals, *symbol_table;
 		int next; int label; bool infunc;
 		int globalvars;
 		
@@ -30,6 +31,7 @@ class Parser{
 		void add_code(int);
 		void add_line();
 		void settarget(vector<string>&);
+		void settable(map<string, ident_t>&);
 		string newlabel();
 		
 		Token& match(string);
@@ -43,7 +45,10 @@ class Parser{
 		void opexpr();
 		void expression();
 		
-		ident_t getIdent(Token&);
+		ident_t getVar(Token&);
+		ident_t getFunc(Token&);
+		int identExist(Token&);
+		ident_t getParam(string, Token&);
 		
 		void idenstat();
 		void whilestat();
@@ -51,6 +56,8 @@ class Parser{
 		void printstat();
 		void readstat();
 		void ifstat();
+		void definestat();
+		void returnstat();
 		void __readcond(string, string, vector<string>&);
 		void __readact(string, string, vector<string>&);
 		

@@ -1,7 +1,9 @@
-read a
-sum = 1
+define add(x, y)
+	print x + y
+end
+
+a = 10
 while a > 0
-	sum = sum * a
+	add(10 - a, 11 - a) 
 	a--
 end
-print sum

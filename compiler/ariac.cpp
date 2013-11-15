@@ -55,9 +55,8 @@ int main(int argc, char** argv){
 			out.close();
 		}
 	}catch(runtime_error& e){
-		cout<<e.what()<<endl;
 		Token& tok = parser.getLastProcessed();
-		cout<<tok.value<<" "<<tok.line<<endl;
+		cout<<"Line "<<tok.line<<": "<<e.what()<<endl;
 	}
 	
 	in.close();

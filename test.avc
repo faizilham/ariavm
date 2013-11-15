@@ -1,24 +1,33 @@
-input
+push 10
 store 16
-push 1
-store 17
-.L0
+.blah.L0
 load 16
 push 0
 gt
-jz .L1
-load 17
+jz .blah.L1
+push 10
 load 16
-mul
-store 17
+sub
+push 11
+load 16
+sub
+call .blah.func.add
+pop
 load 16
 push 1
 sub
 store 16
-jmp .L0
-.L1
-load 17
+jmp .blah.L0
+.blah.L1
+halt
+.blah.func.add
+store 1
+store 0
+load 0
+load 1
+add
 print
 push 10
 printc
-halt
+push 0
+return
