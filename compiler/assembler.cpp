@@ -57,10 +57,11 @@ void Assembler::build_symbol(){
 		}
 		
 		if (i == code.size()) break;
-		string second = code[i++];
+		string second = uppercase(code[i++]);
 		
 		if (second[0] == '.'){
 			symbol.push_back(second);
+			
 			for (int j = 0; j < 3; j++)
 				symbol.push_back(strc('\0'));
 				
