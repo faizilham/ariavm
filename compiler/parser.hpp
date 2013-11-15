@@ -84,7 +84,7 @@ class Parser{
 		
 		
 	public:
-		Parser(istream&);
+		Parser(string, istream&);
 		~Parser();
 		
 		Token& getLastProcessed();

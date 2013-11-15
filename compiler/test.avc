@@ -3,39 +3,39 @@ push 16
 store
 push 16
 load
-call .blah.func.fibo
+call .test.func.fibo
 print
 push 10
 printc
 halt
-.blah.func.fibo
+.test.func.fibo
 push 0
 store
 push 0
 load
 push 2
 lt
-jnz .blah.L1
-jmp .blah.L2
-.blah.L1
+jnz .test.L1
+jmp .test.L2
+.test.L1
 push 0
 load
 return
-jmp .blah.L0
-.blah.L2
+jmp .test.L0
+.test.L2
 push 0
 load
 push 1
 sub
-call .blah.func.fibo
+call .test.func.fibo
 push 0
 load
 push 2
 sub
-call .blah.func.fibo
+call .test.func.fibo
 add
 return
-jmp .blah.L0
-.blah.L0
+jmp .test.L0
+.test.L0
 push 0
 return

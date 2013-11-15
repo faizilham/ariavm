@@ -34,7 +34,7 @@ int main(int argc, char** argv){
 	string namepart = fname.substr(0, fname.length() - 5);
 
 	ifstream in(fname.c_str());	
-	Parser parser(in);
+	Parser parser(namepart, in);
 	
 	try{
 		parser.parse();

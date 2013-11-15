@@ -1,13 +1,13 @@
 #include "parser.hpp"
 #include <stdexcept>
 
-Parser::Parser(istream& input) : tokens(input){
+Parser::Parser(string module, istream& input) : tokens(input){
 	next = 0;
 	label = 0; globalvars = 0;
 	infunc = false;
 	settarget(main);
 	settable(globals);
-	module_name = ".blah";
+	module_name = "." + module;
 	try{
 		tokens.tokenize();
 	}catch(runtime_error& e){
