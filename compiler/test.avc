@@ -1,26 +1,35 @@
-push 8
+input
+push 16
+store
+push 16
+load
 call .blah.func.fibo
 print
 push 10
 printc
 halt
 .blah.func.fibo
-store 0
-load 0
+push 0
+store
+push 0
+load
 push 2
 lt
 jnz .blah.L1
 jmp .blah.L2
 .blah.L1
-load 0
+push 0
+load
 return
 jmp .blah.L0
 .blah.L2
-load 0
+push 0
+load
 push 1
 sub
 call .blah.func.fibo
-load 0
+push 0
+load
 push 2
 sub
 call .blah.func.fibo

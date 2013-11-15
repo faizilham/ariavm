@@ -129,7 +129,8 @@ void Parser::expression(){
 		if (lookAhead(T_PAR_OPEN)){ // function
 			funcexpr(getFunc(ident));
 		}else{ // variable
-			add_code("load"); add_code(getVar(ident).memory); add_line();
+			add_code("push"); add_code(getVar(ident).memory); add_line();
+			add_code("load"); add_line();
 		}
 		
 	}else if(lookAhead(T_PAR_OPEN)){
@@ -161,8 +162,8 @@ void Parser::assignstat(){
 
 void Parser::incrstat(ident_t idt){
 	string inc = match(T_INCDEC).value;
-	
-	add_code("load"); add_code(idt.memory); add_line();
+	add_code("push"); add_code(idt.memory); add_line();
+	add_code("load"); add_line();
 	add_code("push"); add_code(1); add_line();
 	
 	if (inc == "++"){
@@ -232,8 +233,8 @@ void Parser::idenstat(){
 		}
 		
 		match(T_NEWLINE);
-		
-		add_code("store"); add_code(idt.memory); add_line();
+		add_code("push"); add_code(idt.memory); add_line();
+		add_code("store"); add_line();
 	}else if(lookAhead(T_PAR_OPEN)){
 		ident_t idt = getFunc(ident);
 		
@@ -301,7 +302,8 @@ void Parser::readstat(){
 	match(T_NEWLINE);
 	
 	add_code("input"); add_line();
-	add_code("store"); add_code(idt.memory); add_line();
+	add_code("push"); add_code(idt.memory); add_line();
+	add_code("store"); add_line();
 }
 
 
@@ -431,7 +433,8 @@ void Parser::definestat(){
 	add_code(func.label); add_line();
 	
 	for (int i = func.memory - 1; i >= 0; i--){
-		add_code("store"); add_code(i); add_line();
+		add_code("push"); add_code(i); add_line();
+		add_code("store"); add_line();
 	}
 	
 	statements();

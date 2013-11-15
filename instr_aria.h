@@ -5,8 +5,8 @@
 /* 	SPESIFIKASI
 		PUSH x	: push x ke array
 		POP		: buang top
-		LOAD x	: push isi alamat x ke array
-		STORE x	: pop, lalu simpan ke x
+		LOAD	: push isi alamat dari pop() ke stack
+		STORE	: pop 2 elemen, lalu simpan pop2 ke pop1
 		JMP x	: jump ke instruksi ke-x
 		JZ x	: jump ke instruksi ke-x jika top == 0
 		JNZ x	: jump ke instruksi ke-x jika top != 0

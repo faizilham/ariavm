@@ -7,8 +7,8 @@
 void h_push(){ push(load_int()); }
 void h_pop(){ pop(); }
 
-void h_load(){ push(reg[load_int()]);}
-void h_store(){	reg[load_int()] = pop();}
+void h_load(){ push(reg[pop()]);}
+void h_store(){	int pop1 = pop(); reg[pop1] = pop();}
 
 void h_jmp(){ ip = load_int();}
 void h_jz(){ int target = load_int(); if (!pop()) ip = target;}
